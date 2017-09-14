@@ -1,0 +1,23 @@
+import java.util.ArrayList;
+
+public abstract class Graph extends Grapher{
+	int scl = 1, x = 0, y = 1, z = 2, min = 0, max = 1;
+	double[] θrange = {0,2*Math.PI}, φrange = {0,Math.PI};
+	double θstep = Math.PI/15, φstep = Math.PI/15;
+	
+	public ArrayList<ArrayList<Vector>> graph(){
+		ArrayList<ArrayList<Vector>> coordinates = new ArrayList<ArrayList<Vector>>();
+		int lineIndex = 0;
+		
+		for(double φ=φrange[min]; φ<=φrange[max]; φ+=φstep){
+			coordinates.add(new ArrayList<Vector>());
+			for(double θ=θrange[min]; θ<=θrange[max]; θ+=θstep){
+				function(coordinates,lineIndex,φ,θ);
+			}
+			lineIndex++;
+		}
+		return coordinates;
+	}
+
+	public abstract void function(ArrayList<ArrayList<Vector>> coordinates, int lineIndex, double φ, double θ);
+}
