@@ -1,0 +1,90 @@
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.TreeMap;
+
+public class Grapher extends Engine{
+	int loopCt = 0;
+	double shift1 = 0, shift2 = 0;
+	double testx = -1, testy = -1, testz = -1;
+	Vector test;
+	double θ = -2.5132741228718345, φ = -3.9793506945470702, xDisp = 0, yDisp = 0;
+	Point cursor = new Point(0,0), disp = new Point(0,0);
+	final int UP = 0, DOWN = 1, LEFT = 2, RIGHT = 3;
+	boolean[] dir = new boolean[4];
+	
+	@Override public void first(Graphics2D g) {}
+	@Override public void loop(Graphics2D go){}
+	
+	//descending map based on distance to pov
+	public TreeMap<Double, ArrayList<PlottablePoint>> renderByDistance(ArrayList<ArrayList<ArrayList<Vector>>> objects, double maxDist){
+		//create a reference for the viewers point of view, at an arbitrarily far distance from the furthest object
+		double[] povAngle = {3*Math.PI/2-θ, Math.PI/2+φ};
+		Vector pov = new Vector("spherical", 10*Math.sqrt(maxDist), povAngle[0], povAngle[1]);
+		//key is distance from pov to 3d planes, value is the 3d plane rendered into 2d polygon
+		TreeMap<Double, ArrayList<PlottablePoint>> pol = new TreeMap<Double, ArrayList<PlottablePoint>>(Collections.reverseOrder());
+		
+		//for each graphable object, add to the tree map
+		for(ArrayList<ArrayList<Vector>> object : objects){
+			//parse each object in a grid pattern
+			for(int line = 0; line < object.size() - 1; line++){
+				for(int dl = 0; dl < object.get(line).size() - 1; dl++){
+					//create a 3d plane from the current point on the object
+					Plane plane = new Plane(object.get(line).get(dl), object.get(line).get(dl+1), object.get(line+1).get(dl+1), object.get(line+1).get(dl));
+					double minD = plane.getDistanceFrom(pov); //sort by shortest distance from plane to point of reference
+					Polygon po = plane.getRender(θ, φ); //create 2d polygon for use in drawing object
+					//if distance exists, add this polygon to the arraylist, otherwise create new key and value
+					PlottablePoint currentPt = new PlottablePoint(po,plane.getNormal());
+					currentPt.setColor(Color.getHSBColor(0.75f,0.5f,1-(float)(currentPt.getNormal().getAngle(pov)/Math.PI)));
+					if(pol.containsKey(minD)) pol.get(minD).add(currentPt);
+					else pol.put(minD, new ArrayList<PlottablePoint>(Arrays.asList(currentPt)));
+				}
+			}
+		}		
+		return pol;
+	}
+	
+	public double maxDistanceFromOrigin(ArrayList<ArrayList<ArrayList<Vector>>> objects){
+		//create point of reference
+		double maxDist = 0;
+		Vector origin = new Vector(0,0,0);
+		for(ArrayList<ArrayList<Vector>> object : objects){
+			for(int line = 0; line < object.size(); line++){
+				for(int dl = 0; dl < object.get(line).size(); dl++){
+					if( origin.distSq(object.get(line).get(dl)) > maxDist){
+						maxDist = origin.distSq(object.get(line).get(dl));
+					}
+				}
+			}
+		}
+		return maxDist;
+	}
+	
+	@Override public void mouseDragged(MouseEvent e) {
+		disp.x = e.getX() - cursor.x;
+		disp.y = e.getY() - cursor.y;
+		cursor = e.getPoint();
+	}
+	@Override public void mousePressed(MouseEvent e){ cursor = e.getPoint(); }
+	@Override public void mouseReleased(MouseEvent e) { disp.x = 0; disp.y = 0;}
+	
+	@Override public void keyPressed(KeyEvent e){
+		switch(e.getKeyCode()){
+			case KeyEvent.VK_UP: dir[UP] = true; break;
+			case KeyEvent.VK_DOWN: dir[DOWN] = true; break;
+			case KeyEvent.VK_LEFT: dir[LEFT] = true; break;
+			case KeyEvent.VK_RIGHT: dir[RIGHT] = true; break;
+		}
+	}
+	
+	interface Function{double[] funct(double θ, double φ);}
+	interface Knot{double[] funct(double r,double a, double d, double p, double q, double θ, double φ);}
+	interface Spheroid{double[] funct(double ρ, double θ, double φ);}
+	
+}
