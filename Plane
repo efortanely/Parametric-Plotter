@@ -72,4 +72,8 @@ public class Plane {
 	public double getSquaredDistanceFromCamera() {
 		return this.squaredDistanceFromCamera;
 	}
+
+	public Vector getNormal() {
+		return this.normal;
+	}
 }
