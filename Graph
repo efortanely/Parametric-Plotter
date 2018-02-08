@@ -38,7 +38,7 @@ public abstract class Graph implements EquationTypes {
 		}
 	}
 
-	public ArrayList<Plane> getPolygons(double renderAngleθ, double renderAngleφ) {
+	public ArrayList<Plane> getPolygons(Vector camera, double renderAngleθ, double renderAngleφ) {
 		ArrayList<Plane> points = new ArrayList<>();
 		for (int line = 0; line < this.coordinates.size() - 1; line++) {
 			for (int dl = 0; dl < this.coordinates.get(line).size() - 1; dl++) {
@@ -46,7 +46,9 @@ public abstract class Graph implements EquationTypes {
 				Plane plane = new Plane(renderAngleθ, renderAngleφ, this.coordinates.get(line).get(dl),
 						this.coordinates.get(line).get(dl + 1), this.coordinates.get(line + 1).get(dl + 1),
 						this.coordinates.get(line + 1).get(dl));
-				points.add(plane);
+				// back-face culling
+				if (camera.dotProduct(plane.getNormal()) > 0)
+					points.add(plane);
 			}
 		}
 		return points;
