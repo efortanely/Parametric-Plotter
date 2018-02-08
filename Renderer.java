@@ -52,7 +52,7 @@ public class Renderer {
 
 		ArrayList<Plane> polygons = new ArrayList<>();
 		for (Graph object : objects) {
-			polygons.addAll(object.getPolygons(renderAngleθ, renderAngleφ));
+			polygons.addAll(object.getPolygons(Renderer.camera, renderAngleθ, renderAngleφ));
 		}
 
 		// sort from back to front (Painter's algorithm)
