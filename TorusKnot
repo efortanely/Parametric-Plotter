@@ -1,68 +1,103 @@
-import java.util.ArrayList;
+public class TorusKnot extends Graph {
+	private int a, d, p, q;
+	private Vector displacement;
+	private double r;
+	private Knot curve = (r, a, d, p, q, θ, φ) -> new Vector((a * Math.sin(q * θ) + d) * Math.sin(p * θ),
+			(a * Math.sin(q * θ) + d) * Math.cos(p * θ), a * Math.cos(q * θ)).plus(this.displacement);
 
-public class TorusKnot extends Graph{
-	int a, d, p, q;
-	int xDiff = 0, yDiff = 0, zDiff = 0;
-	double r;
-	Knot curve = (r,a,d,p,q,θ,φ) -> new double[]{xDiff+((a*Math.sin(q*θ)+d)*Math.sin(p*θ)),
-			   yDiff+((a*Math.sin(q*θ)+d)*Math.cos(p*θ)),
-			   zDiff+(a*Math.cos(q*θ))};
-	
-	
-	//"I THOUGHT IT WOULD BE EASY, BUT IT'S NOT! BUT IT'S NOT! ... (realizing what just said) ... OOOOH THE IRONY!"
-	//I thought approximating the frenet frame was going to be the hard part, and the torus knot equation would be EASY... RIP
-	Knot torusKnot = (r,a,d,p,q,θ,φ) -> 
-	{
-		//r(θ,φ)+kNcos(φ)+kBsin(φ) : r(t)=initial parametric function for knot,k=radius,N=normal unit vector,B=binormal unit vector
-		Vector pos = new Vector(curve.funct(r,a,d,p,q,θ,φ));
-		Vector n = (getNormal(θ,φ).unit()).multiplyByScalar(Math.cos(φ));
-		Vector b = (getBinormal(θ,φ).unit()).multiplyByScalar(Math.sin(φ));
-		Vector sum = n.plus(b);
-		sum = sum.multiplyByScalar(r/**(1.0/(Math.pow(θ-Math.PI, 2) + 1))*/); //Witch of Agnesi
-		Vector eq = pos.plus(sum);
-		return eq.getArray();
+	// "I thought it would be easy, but it's not! But it's not!
+	// (realizing what just said)
+	// Oooooh, the irony!
+	// I thought approximating the frenet frame was going to be the hard part, and
+	// the torus knot equation would be the easy part... sigh.
+
+	Knot torusKnot = (r, a, d, p, q, θ, φ) -> {
+		// r(θ,φ)+kNcos(φ)+kBsin(φ) : r(t)=initial parametric function for
+		// knot,k=radius,N=normal unit vector,B=binormal unit vector
+		Vector knotEquation = this.curve.funct(r, a, d, p, q, θ, φ);
+		Vector normal = this.getNormal(θ, φ).unit().multiplyByScalar(Math.cos(φ));
+		Vector binormal = this.getBinormal(θ, φ).unit().multiplyByScalar(Math.sin(φ));
+		Vector radiusUnit = normal.plus(binormal);
+		Vector radiusArm = radiusUnit.multiplyByScalar(r);
+		// Witch of Agnesi
+		// sum = sum.multiplyByScalar(1.0 / (Math.pow(θ - Math.PI, 2) + 1));
+		Vector eq = knotEquation.plus(radiusArm);
+		return eq;
 	};
-	
-	public TorusKnot(int scl, double r, int a, int d, int p, int q){ 
-		this.scl=scl; this.r = r; this.a=a; this.d=d; this.p=p; this.q=q; 
-		super.θstep = Math.PI/50;
-		super.φrange = new double[]{0,3*Math.PI};
+
+	public TorusKnot(double r, int a, int d, int p, int q) {
+		this.r = r;
+		this.a = a;
+		this.d = d;
+		this.p = p;
+		this.q = q;
+		this.displacement = new Vector(0, 0, 0);
+		super.θstep = Math.PI / 50;
+		super.φrange = new double[] { 0, 3 * Math.PI };
 	}
-	public TorusKnot(int scl, double r, int a, int d, int p, int q, double[] θrange, double[] φrange){ 
-		this(scl,r,a,d,p,q); super.θrange = θrange; super.φrange = φrange; 
+
+	public TorusKnot(int scl, double r, int a, int d, int p, int q) {
+		this(r, a, d, p, q);
+		this.scl = scl;
 	}
-	public TorusKnot(int scl, double r, int a, int d, int p, int q, double[] θrange, double[] φrange, double θstep, double φstep){ 
-		this(scl,r,a,d,p,q,θrange,φrange); super.θstep = θstep; super.φstep = φstep; 
+
+	public TorusKnot(double r, int a, int d, int p, int q, double[] θrange, double[] φrange) {
+		this(r, a, d, p, q);
+		super.θrange = θrange;
+		super.φrange = φrange;
 	}
-	
-	@Override public void function(ArrayList<ArrayList<Vector>> coordinates, int lineIndex, double φ, double θ) {
-		double[] temp = torusKnot.funct(r,a,d,p,q,θ,φ);
-		coordinates.get(lineIndex).add(new Vector(scl*temp[x],scl*temp[y],scl*temp[z]));
+
+	public TorusKnot(int scl, double r, int a, int d, int p, int q, double[] θrange, double[] φrange) {
+		this(scl, r, a, d, p, q);
+		super.θrange = θrange;
+		super.φrange = φrange;
 	}
-	
-	public void shift(int x, int y, int z){
-		xDiff = x; yDiff = y; zDiff = z;
+
+	public TorusKnot(double r, int a, int d, int p, int q, double[] θrange, double[] φrange, double θstep,
+			double φstep) {
+		this(r, a, d, p, q, θrange, φrange);
+		super.θstep = θstep;
+		super.φstep = φstep;
+	}
+
+	public TorusKnot(int scl, double r, int a, int d, int p, int q, double[] θrange, double[] φrange, double θstep,
+			double φstep) {
+		this(scl, r, a, d, p, q, θrange, φrange);
+		super.θstep = θstep;
+		super.φstep = φstep;
+	}
+
+	public void shift(int x, int y, int z) {
+		this.displacement = new Vector(x, y, z);
 	}
 
 	public Vector getTangent(double θ, double φ) {
 		double step = 1E-3;
-		Vector pos1 = (new Vector(curve.funct(r,a,d,p,q,θ,φ))).multiplyByScalar(scl), 
-			   pos2 = (new Vector(curve.funct(r,a,d,p,q,θ+step,φ))).multiplyByScalar(scl);
-		Vector tangent = pos2.minus(pos1).multiplyByScalar(1.0/step);
-		tangent.setPosition(new Vector(curve.funct(r,a,d,p,q,θ,φ)).multiplyByScalar(scl));
+		Vector pos1 = this.curve.funct(this.r, this.a, this.d, this.p, this.q, θ, φ)
+				.multiplyByScalar(this.scl);
+		Vector pos2 = this.curve.funct(this.r, this.a, this.d, this.p, this.q, θ + step, φ).multiplyByScalar(this.scl);
+		Vector tangent = pos2.minus(pos1).multiplyByScalar(1.0 / step);
+		tangent.setPosition(pos1);
 		return tangent;
 	}
-	
+
 	public Vector getNormal(double θ, double φ) {
 		double step = 1E-3;
-		Vector tangent = getTangent(θ,φ), tangent2 = getTangent(θ+step,φ), normal = tangent2.minus(tangent).multiplyByScalar(1.0/step);
-		normal.setPosition(new Vector(curve.funct(r,a,d,p,q,θ,φ)).multiplyByScalar(scl));
+		Vector tangent = this.getTangent(θ, φ);
+		Vector tangent2 = this.getTangent(θ + step, φ);
+		Vector normal = tangent2.minus(tangent).multiplyByScalar(1.0 / step);
+		normal.setPosition(this.curve.funct(this.r, this.a, this.d, this.p, this.q, θ, φ).multiplyByScalar(this.scl));
 		return normal;
 	}
 
 	public Vector getBinormal(double θ, double φ) {
-		Vector binormal = getTangent(θ,φ).crossProduct(getNormal(θ,φ));
-		binormal.setPosition(new Vector(curve.funct(r,a,d,p,q,θ,φ)).multiplyByScalar(scl));
+		Vector binormal = this.getTangent(θ, φ).crossProduct(this.getNormal(θ, φ));
+		binormal.setPosition(this.curve.funct(this.r, this.a, this.d, this.p, this.q, θ, φ).multiplyByScalar(this.scl));
 		return binormal;
+	}
+
+	@Override
+	public Vector getCoordinateAt(double φ, double θ) {
+		return this.torusKnot.funct(this.r, this.a, this.d, this.p, this.q, θ, φ).multiplyByScalar(this.scl);
 	}
 }
