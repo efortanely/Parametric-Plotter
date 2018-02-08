@@ -1,24 +1,47 @@
-import java.util.ArrayList;
+public class ParametricPlot extends Graph {
+	private Function plot;
+	private Vector displacement;
 
-public class ParametricPlot extends Graph{
-	Function plot;
-	int xDiff = 0, yDiff = 0, zDiff = 0;
-	
-	public ParametricPlot(int scl, Function plot){ this.scl=scl; this.plot=plot; }
-	public ParametricPlot(int scl, Function plot, double[] θrange, double[] φrange){ this(scl,plot); this.θrange = θrange; this.φrange = φrange; }
-	public ParametricPlot(int scl, Function plot, double[] θrange, double[] φrange, double θstep, double φstep){ 
-		this(scl,plot,θrange,φrange); this.θstep = θstep; this.φstep = φstep; 
+	public ParametricPlot(Function plot) {
+		this.displacement = new Vector(0, 0, 0);
+		this.plot = plot;
 	}
 
-	@Override public void function(ArrayList<ArrayList<Vector>> coordinates, int lineIndex, double φ, double θ){
-		double[] temp = plot.funct(θ, φ);
-		temp[0] += xDiff;
-		temp[1] += yDiff;
-		temp[2] += zDiff;
-		coordinates.get(lineIndex).add(new Vector(scl*temp[x],scl*temp[y],scl*temp[z]));
+	public ParametricPlot(int scl, Function plot) {
+		this(plot);
+		this.scl = scl;
 	}
-	
-	public void shift(int x, int y, int z){
-		xDiff = x; yDiff = y; zDiff = z;
+
+	public ParametricPlot(Function plot, double[] θrange, double[] φrange) {
+		this(plot);
+		this.θrange = θrange;
+		this.φrange = φrange;
+	}
+
+	public ParametricPlot(int scl, Function plot, double[] θrange, double[] φrange) {
+		this(scl, plot);
+		this.θrange = θrange;
+		this.φrange = φrange;
+	}
+
+	public ParametricPlot(Function plot, double[] θrange, double[] φrange, double θstep, double φstep) {
+		this(plot, θrange, φrange);
+		this.θstep = θstep;
+		this.φstep = φstep;
+	}
+
+	public ParametricPlot(int scl, Function plot, double[] θrange, double[] φrange, double θstep, double φstep) {
+		this(scl, plot, θrange, φrange);
+		this.θstep = θstep;
+		this.φstep = φstep;
+	}
+
+	public void shift(int x, int y, int z) {
+		this.displacement = new Vector(x, y, z);
+	}
+
+	@Override
+	public Vector getCoordinateAt(double φ, double θ) {
+		return this.plot.funct(θ, φ).plus(this.displacement).multiplyByScalar(this.scl);
 	}
 }
