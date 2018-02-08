@@ -2,139 +2,176 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.util.Arrays;
 
-public class Vector extends Grapher{
-	private double[] v, p = new double[]{0,0,0};
-	
-	public Vector(double[] v){ this.v = v; }
-	public Vector(double x, double y, double z){ this.v = new double[]{x,y,z}; }
-	public Vector(double x, double y){ this.v = new double[]{x,y}; }
-	
-	//create new vector relative to the tips of vectors
-	public Vector(Vector tip, Vector tail){
+public class Vector {
+	private double[] v, p = new double[] { 0, 0, 0 };
+
+	public Vector(double[] v) {
+		this.v = v;
+	}
+
+	public Vector(double x, double y, double z) {
+		this.v = new double[] { x, y, z };
+	}
+
+	public Vector(double x, double y) {
+		this.v = new double[] { x, y };
+	}
+
+	// create new vector relative to the tips of vectors
+	public Vector(Vector tip, Vector tail) {
 		tip = tip.getTip();
 		tail = tail.getTip();
-		Vector v1 = new Vector(tip.x(),tip.y(),tip.z()), v2 = new Vector(tail.x(),tail.y(),tail.z());
+		Vector v1 = new Vector(tip.x(), tip.y(), tip.z()), v2 = new Vector(tail.x(), tail.y(), tail.z());
 		this.v = v1.minus(v2).getArray();
 		this.p = v2.getArray();
 	}
-	
-	
-	//used for converting spherical to cartesian coordinates
-	public Vector(String type, double ρ, double θ, double φ){ 
-		this(ρ*Math.cos(θ)*Math.sin(φ),ρ*Math.sin(θ)*Math.sin(φ),ρ*Math.cos(φ));
+
+	// used for converting spherical to cartesian coordinates
+	public Vector(String type, double ρ, double θ, double φ) {
+		this(ρ * Math.cos(θ) * Math.sin(φ), ρ * Math.sin(θ) * Math.sin(φ), ρ * Math.cos(φ));
 	}
-	
-	public void setPosition(double[] p){
+
+	public void setPosition(double[] p) {
 		this.p = p.clone();
 	}
-	
-	public void setPosition(Vector p){
+
+	public void setPosition(Vector p) {
 		this.p = p.v.clone();
 	}
-	
-	public double magnitude(){
-		return Math.sqrt(optimized_magnitude());
+
+	public double magnitude() {
+		return Math.sqrt(this.optimized_magnitude());
 	}
-	
-	public double optimized_magnitude(){
+
+	public double optimized_magnitude() {
 		double sum = 0;
-		for(double comp : this.v) sum += Math.pow(comp, 2);
+		for (double comp : this.v)
+			sum += Math.pow(comp, 2);
 		return sum;
 	}
-	
-	public Vector multiplyByScalar(double s){
+
+	public Vector multiplyByScalar(double s) {
 		double[] v = this.v;
-		for(int comp = 0; comp < v.length; comp++){
+		for (int comp = 0; comp < v.length; comp++) {
 			v[comp] *= s;
 		}
-		
+
 		Vector mult = new Vector(v);
 		mult.setPosition(this.p);
 		return mult;
 	}
-	
-	public Vector minus(Vector v2){
+
+	public Vector minus(Vector v2) {
 		double[] v = this.v;
-		for(int comp = 0; comp < v.length; comp++) v[comp] -= v2.v[comp];
+		for (int comp = 0; comp < v.length; comp++)
+			v[comp] -= v2.v[comp];
 		return new Vector(v);
 	}
-	
-	public Vector plus(Vector v2){
+
+	public Vector plus(Vector v2) {
 		double[] v = this.v;
-		for(int comp = 0; comp < v.length; comp++) v[comp] += v2.v[comp];
+		for (int comp = 0; comp < v.length; comp++)
+			v[comp] += v2.v[comp];
 		Vector vec = new Vector(v);
-		vec.setPosition(getTail());
+		vec.setPosition(this.getTail());
 		return vec;
 	}
-	
-	public Vector crossProduct(Vector v2){
-		double a = x(), b = y(), c = z(), d = v2.x(), e = v2.y(), f = v2.z();
-		return new Vector(b*f-e*c,c*d-a*f,a*e-b*d);
+
+	public Vector crossProduct(Vector v2) {
+		double a = this.x(), b = this.y(), c = this.z(), d = v2.x(), e = v2.y(), f = v2.z();
+		return new Vector(b * f - e * c, c * d - a * f, a * e - b * d);
 	}
-	
-	public double dotProduct(Vector v2){
-		return x()*v2.x() + y()*v2.y() + z()*v2.z();
+
+	public double dotProduct(Vector v2) {
+		return this.x() * v2.x() + this.y() * v2.y() + this.z() * v2.z();
 	}
-	
-	public double getAngle(Vector v2){
-		return Math.acos(this.dotProduct(v2)/(magnitude()*v2.magnitude()));
+
+	public double getAngle(Vector v2) {
+		return Math.acos(this.dotProduct(v2) / (this.magnitude() * v2.magnitude()));
 	}
-	
-	public Vector unit(){
+
+	public Vector unit() {
 		double[] u = this.v;
-		double m = magnitude();
-		for(int i = 0; i < this.v.length; i++) u[i] /= m;
+		double m = this.magnitude();
+		for (int i = 0; i < this.v.length; i++)
+			u[i] /= m;
 		Vector v = new Vector(u);
-		v.setPosition(getTail());
+		v.setPosition(this.getTail());
 		return v;
 	}
-	
-	public double[] getArray(){
-		return new double[]{xPos()+x(),yPos()+y(),zPos()+z()};
+
+	public double[] getArray() {
+		return new double[] { this.xPos() + this.x(), this.yPos() + this.y(), this.zPos() + this.z() };
 	}
-	
-	public double x(){ return v[0]; }
-	public double y(){ return v[1]; }
-	public double z(){ return v[2]; }
-	
-	public double xPos(){ return p[0]; }
-	public double yPos(){ return p[1]; }
-	public double zPos(){ return p[2]; }
-	
-	public double xDiff(){ return x() - xPos(); }
-	public double yDiff(){ return y() - yPos(); }
-	public double zDiff(){ return z() - zPos(); }
-	
-	public Vector getTip(){
-		return new Vector(xPos()+x(),yPos()+y(),zPos()+z());
+
+	public double x() {
+		return this.v[0];
 	}
-	
-	public Vector getTail(){
-		return new Vector(xPos(),yPos(),zPos());
+
+	public double y() {
+		return this.v[1];
 	}
-	
-	//computes relative to tip
-	public double distSq(Vector p2){
+
+	public double z() {
+		return this.v[2];
+	}
+
+	public double xPos() {
+		return this.p[0];
+	}
+
+	public double yPos() {
+		return this.p[1];
+	}
+
+	public double zPos() {
+		return this.p[2];
+	}
+
+	public double xDiff() {
+		return this.x() - this.xPos();
+	}
+
+	public double yDiff() {
+		return this.y() - this.yPos();
+	}
+
+	public double zDiff() {
+		return this.z() - this.zPos();
+	}
+
+	public Vector getTip() {
+		return new Vector(this.xPos() + this.x(), this.yPos() + this.y(), this.zPos() + this.z());
+	}
+
+	public Vector getTail() {
+		return new Vector(this.xPos(), this.yPos(), this.zPos());
+	}
+
+	// computes relative to tip
+	public double distSq(Vector p2) {
 		Vector tip1 = this.getTip(), tip2 = p2.getTip();
-		return Math.pow(tip1.x()-tip2.x(), 2) + Math.pow(tip1.y()-tip2.y(), 2) + Math.pow(tip1.z()-tip2.z(), 2);
+		return Math.pow(tip1.x() - tip2.x(), 2) + Math.pow(tip1.y() - tip2.y(), 2) + Math.pow(tip1.z() - tip2.z(), 2);
 	}
-	
-	public Point getRender(double θ, double φ){ 
-		return new Point((int)(x()*Math.cos(θ)-y()*Math.sin(θ)),(int)((x()*Math.sin(θ)+y()*Math.cos(θ))*Math.sin(φ)-z()*Math.cos(φ)));
+
+	public Point getRender(double θ, double φ) {
+		return new Point((int) (this.x() * Math.cos(θ) - this.y() * Math.sin(θ)),
+				(int) ((this.x() * Math.sin(θ) + this.y() * Math.cos(θ)) * Math.sin(φ) - this.z() * Math.cos(φ)));
 	}
-	
-	public void drawVector(Graphics g, double θ, double φ){
-		Point tail = getTail().getRender(θ, φ), tip = getTip().getRender(θ, φ);		
+
+	public void drawVector(Graphics g, double θ, double φ) {
+		Point tail = this.getTail().getRender(θ, φ), tip = this.getTip().getRender(θ, φ);
 		g.drawLine(tip.x, tip.y, tail.x, tail.y);
 	}
-	
-	public void drawPoint(Graphics g, double θ, double φ, int width){
-		Point tip = getTip().getRender(θ, φ);
+
+	public void drawPoint(Graphics g, double θ, double φ, int width) {
+		Point tip = this.getTip().getRender(θ, φ);
 		g.fillOval(tip.x, tip.y, width, width);
 	}
-	
-	public String toString(){ 
+
+	@Override
+	public String toString() {
 		return Arrays.toString(this.v) + " at position " + Arrays.toString(this.p);
 	}
-	
+
 }
