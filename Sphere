@@ -1,24 +1,33 @@
-import java.util.ArrayList;
+public class Sphere extends Graph {
+	private double ρ;
+	private Vector displacement;
+	private Spheroid sphere = (ρ, θ,
+			φ) -> new Vector(ρ * Math.cos(θ) * Math.sin(φ), ρ * Math.sin(θ) * Math.sin(φ), ρ * Math.cos(φ))
+					.plus(this.displacement);
 
-public class Sphere extends Graph{
-	double ρ;
-	int xDiff = 0, yDiff = 0, zDiff = 0;
-	Spheroid sphere = (ρ,θ,φ) -> new double[]{xDiff+(ρ*Math.cos(θ)*Math.sin(φ)),
-											  yDiff+(ρ*Math.sin(θ)*Math.sin(φ)),
-											  zDiff+(ρ*Math.cos(φ))};	
-	
-	public Sphere(double ρ){ this.ρ=ρ; }
-	public Sphere(double ρ, double[] θrange, double[] φrange){ this(ρ); this.θrange = θrange; this.φrange = φrange; }
-	public Sphere(double ρ, double[] θrange, double[] φrange, double θstep, double φstep){ 
-		this(ρ,θrange,φrange); this.θstep = θstep; this.φstep = φstep; 
+	public Sphere(double ρ) {
+		this.displacement = new Vector(0, 0, 0);
+		this.ρ = ρ;
 	}
-	
-	@Override public void function(ArrayList<ArrayList<Vector>> coordinates, int lineIndex, double φ, double θ) {
-		double[] temp = sphere.funct(ρ, θ, φ);
-		coordinates.get(lineIndex).add(new Vector(temp[x],temp[y],temp[z]));
+
+	public Sphere(double ρ, double[] θrange, double[] φrange) {
+		this(ρ);
+		this.θrange = θrange;
+		this.φrange = φrange;
 	}
-	
-	public void shift(int x, int y, int z){
-		xDiff = x; yDiff = y; zDiff = z;
+
+	public Sphere(double ρ, double[] θrange, double[] φrange, double θstep, double φstep) {
+		this(ρ, θrange, φrange);
+		this.θstep = θstep;
+		this.φstep = φstep;
+	}
+
+	public void shift(int x, int y, int z) {
+		this.displacement = new Vector(x, y, z);
+	}
+
+	@Override
+	public Vector getCoordinateAt(double φ, double θ) {
+		return this.sphere.funct(this.ρ, θ, φ);
 	}
 }
