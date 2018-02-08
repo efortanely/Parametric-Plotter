@@ -1,46 +1,75 @@
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Polygon;
-import java.awt.geom.Area;
 
 public class Plane {
-	Vector[] vertices;
-	
-	public Plane(Vector ... v){
-		vertices = new Vector[]{v[0],v[1],v[2],v[3]};
+	private static Vector camera;
+	private Polygon rendering2D;
+	private Vector[] rendering3D;
+	private Vector normal;
+	private double squaredDistanceFromCamera;
+	private Color color;
+
+	public Plane(double renderAngleθ, double renderAngleφ, Vector... v) {
+		this.rendering3D = new Vector[] { v[0], v[1], v[2], v[3] };
+		this.setSquaredDistanceFrom(Plane.camera);
+		this.setRender(renderAngleθ, renderAngleφ);
+		this.setNormal();
+		this.setColor();
 	}
-	
-	public double getDistanceFrom(Vector p1){
-		double[] dist = {p1.distSq(vertices[0]),p1.distSq(vertices[1]),p1.distSq(vertices[2]),p1.distSq(vertices[3])};
-		//objects are categorized in tree map relative to the shortest distance of the points to the viewer
+
+	public static void setCamera(Vector camera) {
+		Plane.camera = camera;
+	}
+
+	public void setSquaredDistanceFrom(Vector p1) {
+		double[] dist = { p1.distSq(this.rendering3D[0]), p1.distSq(this.rendering3D[1]),
+				p1.distSq(this.rendering3D[2]), p1.distSq(this.rendering3D[3]) };
+
 		double shortestDistance = dist[0];
-		for (int i = 1; i < dist.length; i++){
-			if (dist[i] < shortestDistance) shortestDistance = dist[i];
+		for (int i = 1; i < dist.length; i++) {
+			if (dist[i] < shortestDistance)
+				shortestDistance = dist[i];
 		}
-		return shortestDistance;
+		this.squaredDistanceFromCamera = shortestDistance;
 	}
-	
-	public Polygon getRender(double θ, double φ){
-		Point[] pts2d = {vertices[0].getRender(θ, φ),vertices[1].getRender(θ, φ),vertices[2].getRender(θ, φ),vertices[3].getRender(θ, φ)};
-		return new Polygon(new int[]{pts2d[0].x,pts2d[1].x,pts2d[2].x,pts2d[3].x}, new int[]{pts2d[0].y,pts2d[1].y,pts2d[2].y,pts2d[3].y}, 4);
+
+	public void setNormal() {
+		Vector v1 = new Vector(this.rendering3D[1], this.rendering3D[3]),
+				v2 = new Vector(this.rendering3D[0], this.rendering3D[2]), normal = v1.crossProduct(v2);
+		normal.setPosition(this.rendering3D[0]);
+		normal = normal.multiplyByScalar(0.1);
+		this.normal = normal;
 	}
-	
-	public Vector getNormal(){
-		Vector v1 = new Vector(vertices[1],vertices[3]), v2 = new Vector(vertices[0],vertices[2]), normal = v1.crossProduct(v2);
-		normal.setPosition(vertices[0]);
-		return normal.multiplyByScalar(0.1);
+
+	public void setRender(double θ, double φ) {
+		Point[] pts2d = { this.rendering3D[0].getRender(θ, φ), this.rendering3D[1].getRender(θ, φ),
+				this.rendering3D[2].getRender(θ, φ), this.rendering3D[3].getRender(θ, φ) };
+		this.rendering2D = new Polygon(new int[] { pts2d[0].x, pts2d[1].x, pts2d[2].x, pts2d[3].x },
+				new int[] { pts2d[0].y, pts2d[1].y, pts2d[2].y, pts2d[3].y }, 4);
 	}
-	
-	public double getAverageZ(){
-		return (vertices[0].z()+vertices[1].z()+vertices[2].z()+vertices[3].z())/4.0;
+
+	public void setColor() {
+		float hue = 0.75f;
+		float sat = 0.5f;
+		double angleBetweenCameraAndNormal = this.normal.getAngle(Plane.camera) / Math.PI;
+		float bright = (float) (1 - angleBetweenCameraAndNormal);
+		this.color = Color.getHSBColor(hue, sat, bright);
 	}
-	
-	//z extends into infinity, assumes point rests on plane
-	public boolean containsPoint(Vector v){
-		v = v.getTip(); //point is assumed to be tip of vector
-		Vector[] vertex = {vertices[0],vertices[1],vertices[2],vertices[3]};
-		for(int i = 0; i < vertex.length; i++) vertex[i] = vertex[i].getTip();
-		Area a = new Area(new Polygon(new int[]{(int)vertex[0].x(),(int)vertex[1].x(),(int)vertex[2].x(),(int)vertex[3].x()},
-				new int[]{(int)vertex[0].y(),(int)vertex[1].y(),(int)vertex[2].y(),(int)vertex[3].y()},4)); //create polygon based on vertexes of plane
-		return a.contains(v.x(), v.y()); //is the tip of the vector contained in the vertices of this plane, z value ignored
+
+	public void draw(Graphics g) {
+		this.draw(g, this.color, Color.black);
+	}
+
+	public void draw(Graphics g, Color fill, Color outline) {
+		g.setColor(fill);
+		g.fillPolygon(this.rendering2D);
+		g.setColor(outline);
+		g.drawPolygon(this.rendering2D);
+	}
+
+	public double getSquaredDistanceFromCamera() {
+		return this.squaredDistanceFromCamera;
 	}
 }
