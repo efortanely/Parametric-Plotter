@@ -1,23 +1,54 @@
 import java.util.ArrayList;
 
-public abstract class Graph extends Grapher{
-	int scl = 1, x = 0, y = 1, z = 2, min = 0, max = 1;
-	double[] θrange = {0,2*Math.PI}, φrange = {0,Math.PI};
-	double θstep = Math.PI/15, φstep = Math.PI/15;
-	
-	public ArrayList<ArrayList<Vector>> graph(){
-		ArrayList<ArrayList<Vector>> coordinates = new ArrayList<ArrayList<Vector>>();
+public abstract class Graph implements EquationTypes {
+	protected final int MIN = 0, MAX = 1;
+	protected ArrayList<ArrayList<Vector>> coordinates;
+	protected int scl = 30;
+	protected double[] θrange = { -2 * Math.PI, 2 * Math.PI };
+	protected double[] φrange = { -2 * Math.PI, 2 * Math.PI };
+	protected double θstep = Math.PI / 15;
+	protected double φstep = Math.PI / 15;
+	protected double distanceToOriginSquared;
+
+	public abstract Vector getCoordinateAt(double φ, double θ);
+
+	public void generateGraph() {
+		this.generateCoordinates();
+		this.findDistanceToOriginOptimized();
+	}
+
+	private void generateCoordinates() {
+		this.coordinates = new ArrayList<>();
 		int lineIndex = 0;
-		
-		for(double φ=φrange[min]; φ<=φrange[max]; φ+=φstep){
-			coordinates.add(new ArrayList<Vector>());
-			for(double θ=θrange[min]; θ<=θrange[max]; θ+=θstep){
-				function(coordinates,lineIndex,φ,θ);
+		for (double φ = this.φrange[this.MIN]; φ <= this.φrange[this.MAX]; φ += this.φstep) {
+			this.coordinates.add(new ArrayList<Vector>());
+			for (double θ = this.θrange[this.MIN]; θ <= this.θrange[this.MAX]; θ += this.θstep) {
+				this.coordinates.get(lineIndex).add(this.getCoordinateAt(φ, θ));
 			}
 			lineIndex++;
 		}
-		return coordinates;
 	}
 
-	public abstract void function(ArrayList<ArrayList<Vector>> coordinates, int lineIndex, double φ, double θ);
+	private void findDistanceToOriginOptimized() {
+		this.distanceToOriginSquared = Double.MIN_VALUE;
+		for (ArrayList<Vector> line : this.coordinates) {
+			for (Vector coord : line) {
+				this.distanceToOriginSquared = Math.max(this.distanceToOriginSquared, coord.optimized_magnitude());
+			}
+		}
+	}
+
+	public ArrayList<Plane> getPolygons(double renderAngleθ, double renderAngleφ) {
+		ArrayList<Plane> points = new ArrayList<>();
+		for (int line = 0; line < this.coordinates.size() - 1; line++) {
+			for (int dl = 0; dl < this.coordinates.get(line).size() - 1; dl++) {
+				// create a 3d plane from the current point on the object
+				Plane plane = new Plane(renderAngleθ, renderAngleφ, this.coordinates.get(line).get(dl),
+						this.coordinates.get(line).get(dl + 1), this.coordinates.get(line + 1).get(dl + 1),
+						this.coordinates.get(line + 1).get(dl));
+				points.add(plane);
+			}
+		}
+		return points;
+	}
 }
